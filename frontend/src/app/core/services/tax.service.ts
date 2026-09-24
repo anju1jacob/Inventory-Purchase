@@ -23,6 +23,13 @@ export interface Tax {
   components?: TaxComponent[];
 }
 
+export interface PaginatedTaxResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Tax[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -33,8 +40,8 @@ export class TaxService {
     private api: ApiService
   ) {}
 
-  getTaxes(): Observable<any> {
-    return this.http.get(
+  getTaxes(): Observable<PaginatedTaxResponse> {
+    return this.http.get<PaginatedTaxResponse>(
       this.api.getUrl('taxes/')
     );
   }

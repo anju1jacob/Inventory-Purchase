@@ -79,15 +79,15 @@ constructor(
   }
 
   loadTaxes(): void {
-    this.taxService.getTaxes().subscribe({
-      next: response => {
-        this.taxes = response.results ?? response;
-      },
-      error: error => {
-        this.errorMessage = this.getErrorMessage(error);
-      }
-    });
-  }
+  this.taxService.getTaxes().subscribe({
+    next: response => {
+      this.taxes = response.results;
+    },
+    error: error => {
+      this.errorMessage = this.getErrorMessage(error);
+    }
+  });
+}
 
   submit(): void {
     this.successMessage = '';
