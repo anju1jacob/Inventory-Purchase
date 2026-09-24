@@ -108,7 +108,7 @@ Configure the PostgreSQL database credentials.
 
 ```cmd
 python manage.py migrate
-
+```
 ### 6. Create an administrator
 
 ```cmd
@@ -119,6 +119,7 @@ python manage.py createsuperuser
 
 ```cmd
 python manage.py runserver
+```
 The API will be available at:
 
 ```text
