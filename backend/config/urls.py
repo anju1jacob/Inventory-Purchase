@@ -20,14 +20,14 @@ from rest_framework.routers import DefaultRouter
 
 from catalog.views import ( ProductViewSet,TaxComponentViewSet,TaxViewSet,)
 from purchases.views import PurchaseVoucherViewSet
-
+from inventory.views import InventoryLotViewSet
 router = DefaultRouter()
 
 router.register(r"products",ProductViewSet,basename="product",)
 router.register(r"taxes",TaxViewSet,basename="tax",)
 router.register( r"tax-components", TaxComponentViewSet,basename="tax-component",)
 router.register(r"purchase-vouchers",PurchaseVoucherViewSet,basename="purchase-voucher",)
-
+router.register(r"inventory",InventoryLotViewSet,basename="inventory",)
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
