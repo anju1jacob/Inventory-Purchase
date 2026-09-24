@@ -13,7 +13,7 @@
   </div>
 
 
-  <button style=";"
+  <button
     type="button"
     class="btn btn-outline-primary"
     (click)="newVoucher()"
@@ -179,185 +179,161 @@
           class="purchase-line mb-3"
         >
 
-          <div class="row g-2 align-items-end">
+          <div class="row g-3 align-items-end">
 
-            <!-- Product -->
+  <!-- Product -->
+  <div class="col-xl-3 col-lg-4 col-md-6">
 
-            <div class="col-lg-3">
+    <label class="form-label">
+      Product
+    </label>
 
-              <label class="form-label">
-                Product
-              </label>
+    <select
+      class="form-select"
+      formControlName="product"
+      (change)="onProductChange(i)"
+    >
 
-              <select
-                class="form-select"
-                formControlName="product"
-                (change)="onProductChange(i)"
-              >
+      <option [ngValue]="null">
+        Select product
+      </option>
 
-                <option [ngValue]="null">
-                  Select product
-                </option>
+      <option
+        *ngFor="let product of products"
+        [ngValue]="product.id"
+      >
+        {{ product.code }} - {{ product.name }}
+      </option>
 
+    </select>
 
-                <option
-                  *ngFor="let product of products"
-                  [ngValue]="product.id"
-                >
+    <small
+      *ngIf="getProduct(line.get('product')?.value)"
+      class="text-muted"
+    >
+      Tax:
+      {{
+        getTaxName(
+          getProduct(line.get('product')?.value)
+        )
+      }}
+      ({{
+        getTaxRate(
+          getProduct(line.get('product')?.value)
+        )
+      }}%)
+    </small>
 
-                  {{ product.code }}
-                  -
-                  {{ product.name }}
-
-                </option>
-
-              </select>
-
-
-              <small
-                *ngIf="
-                  getProduct(
-                    line.get('product')?.value
-                  )
-                "
-                class="text-muted"
-              >
-
-                Tax:
-                {{
-                  getTaxName(
-                    getProduct(
-                      line.get('product')?.value
-                    )
-                  )
-                }}
-
-                ({{
-                  getTaxRate(
-                    getProduct(
-                      line.get('product')?.value
-                    )
-                  )
-                }}%)
-
-              </small>
-
-            </div>
+  </div>
 
 
-            <!-- Quantity -->
+  <!-- Quantity -->
+  <div class="col-xl-1 col-lg-2 col-md-3">
 
-            <div class="col-lg-1">
+    <label class="form-label">
+      Qty
+    </label>
 
-              <label class="form-label">
-                Qty
-              </label>
+    <input
+      type="number"
+      class="form-control"
+      formControlName="quantity"
+      min="0.001"
+      step="0.001"
+    >
 
-              <input
-                type="number"
-                class="form-control"
-                formControlName="quantity"
-                min="0.001"
-                step="0.001"
-              >
-
-            </div>
-
-
-            <!-- Unit Cost -->
-
-            <div class="col-lg-2">
-
-              <label class="form-label">
-                Unit Cost
-              </label>
-
-              <input
-                type="number"
-                class="form-control"
-                formControlName="unit_cost"
-                min="0"
-                step="0.01"
-              >
-
-            </div>
+  </div>
 
 
-            <!-- Discount -->
+  <!-- Unit Cost -->
+  <div class="col-xl-2 col-lg-2 col-md-3">
 
-            <div class="col-lg-2">
+    <label class="form-label">
+      Unit Cost
+    </label>
 
-              <label class="form-label">
-                Discount
-              </label>
+    <input
+      type="number"
+      class="form-control"
+      formControlName="unit_cost"
+      min="0"
+      step="0.01"
+    >
 
-              <input
-                type="number"
-                class="form-control"
-                formControlName="discount"
-                min="0"
-                step="0.01"
-              >
-
-            </div>
-
-
-            <!-- Lot -->
-
-            <div
-              class="col-lg-2"
-              *ngIf="isLotControlled(i)"
-            >
-
-              <label class="form-label">
-                Lot Number
-              </label>
-
-              <input
-                type="text"
-                class="form-control"
-                formControlName="lot_number"
-                placeholder="LOT-001"
-              >
-
-            </div>
+  </div>
 
 
-            <!-- Expiry -->
+  <!-- Discount -->
+  <div class="col-xl-2 col-lg-2 col-md-3">
 
-            <div
-              class="col-lg-2"
-              *ngIf="isLotControlled(i)"
-            >
+    <label class="form-label">
+      Discount
+    </label>
 
-              <label class="form-label">
-                Expiry Date
-              </label>
+    <input
+      type="number"
+      class="form-control"
+      formControlName="discount"
+      min="0"
+      step="0.01"
+    >
 
-              <input
-                type="date"
-                class="form-control"
-                formControlName="expiry_date"
-              >
-
-            </div>
+  </div>
 
 
-            <!-- Remove -->
+  <!-- Lot -->
+  <div
+    class="col-xl-2 col-lg-2 col-md-3"
+    *ngIf="isLotControlled(i)"
+  >
 
-            <div class="col-lg-1">
+    <label class="form-label">
+      Lot Number
+    </label>
 
-              <button
-                type="button"
-                class="btn btn-outline-danger w-100"
-                (click)="removeLine(i)"
-              >
-                ×
-              </button>
+    <input
+      type="text"
+      class="form-control"
+      formControlName="lot_number"
+      placeholder="LOT-001"
+    >
 
-            </div>
+  </div>
 
-          </div>
+
+  <!-- Expiry -->
+  <div
+    class="col-xl-2 col-lg-2 col-md-3"
+    *ngIf="isLotControlled(i)"
+  >
+
+    <label class="form-label">
+      Expiry Date
+    </label>
+
+    <input
+      type="date"
+      class="form-control"
+      formControlName="expiry_date"
+    >
+
+  </div>
+
+
+  <!-- Remove -->
+  <div class="col-xl-1 col-lg-2 col-md-3">
+
+    <button
+      type="button"
+      class="btn btn-outline-danger w-100"
+      (click)="removeLine(i)"
+    >
+      ×
+    </button>
+
+  </div>
+
+</div>
 
 
           <!-- Line calculation -->
