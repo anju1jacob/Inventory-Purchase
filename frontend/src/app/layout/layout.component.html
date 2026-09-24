@@ -1,0 +1,53 @@
+<div class="d-flex min-vh-100 bg-light">
+
+  <aside class="bg-dark text-white p-3" style="width: 240px;">
+
+    <h4 class="mb-4">
+      Inventory Purchase
+    </h4>
+
+    <nav class="nav flex-column gap-2">
+
+      <a
+        routerLink="/products"
+        routerLinkActive="active"
+        class="nav-link text-white"
+      >
+        Products
+      </a>
+
+      <a
+        routerLink="/taxes"
+        routerLinkActive="active"
+        class="nav-link text-white"
+      >
+        Taxes
+      </a>
+
+      <a
+        routerLink="/purchases"
+        routerLinkActive="active"
+        class="nav-link text-white"
+      >
+        Purchases
+      </a>
+
+      <a
+        routerLink="/inventory"
+        routerLinkActive="active"
+        class="nav-link text-white"
+      >
+        Inventory
+      </a>
+
+    </nav>
+
+  </aside>
+
+  <main class="flex-grow-1 p-4">
+
+    <router-outlet></router-outlet>
+
+  </main>
+
+</div>
