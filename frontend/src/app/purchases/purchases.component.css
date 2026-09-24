@@ -1,0 +1,26 @@
+.purchase-line {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f8f9fa;
+}
+
+.summary-card {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  background: #f8f9fa;
+}
+
+.form-label {
+  font-weight: 500;
+}
+
+.table th {
+  white-space: nowrap;
+}
+
+.purchase-line small {
+  display: block;
+  margin-top: 4px;
+}

@@ -1,1 +1,668 @@
-<p>purchases works!</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+  <div>
+
+    <h2 class="mb-1">
+      Purchase Voucher
+    </h2>
+
+    <p class="text-muted mb-0">
+      Create purchase vouchers, calculate taxes and update inventory.
+    </p>
+
+  </div>
+
+
+  <!--<button
+    type="button"
+    class="btn btn-outline-primary"
+    (click)="newVoucher()"
+  >
+    New Voucher
+  </button>
+
+</div> -->
+
+
+<!-- Messages -->
+
+<div
+  *ngIf="successMessage"
+  class="alert alert-success"
+>
+  {{ successMessage }}
+</div>
+
+
+<div
+  *ngIf="errorMessage"
+  class="alert alert-danger"
+>
+  {{ errorMessage }}
+</div>
+
+
+<!-- =============================== -->
+<!-- VOUCHER FORM -->
+<!-- =============================== -->
+
+<div class="card shadow-sm mb-4">
+
+  <div class="card-header bg-white">
+
+    <div class="d-flex justify-content-between align-items-center">
+
+      <strong>
+        Voucher Details
+      </strong>
+
+
+      <span
+        *ngIf="currentVoucherId"
+        class="badge text-bg-secondary"
+      >
+        Draft #{{ currentVoucherId }}
+      </span>
+
+    </div>
+
+  </div>
+
+
+  <div class="card-body">
+
+    <form
+      [formGroup]="purchaseForm"
+    >
+
+      <!-- Voucher details -->
+
+      <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+
+          <label class="form-label">
+            Voucher Number
+          </label>
+
+          <input
+            type="text"
+            class="form-control"
+            formControlName="voucher_number"
+            placeholder="PV-0001"
+          >
+
+        </div>
+
+
+        <div class="col-md-3">
+
+          <label class="form-label">
+            Supplier Name
+          </label>
+
+          <input
+            type="text"
+            class="form-control"
+            formControlName="supplier_name"
+            placeholder="Supplier name"
+          >
+
+        </div>
+
+
+        <div class="col-md-3">
+
+          <label class="form-label">
+            Invoice Number
+          </label>
+
+          <input
+            type="text"
+            class="form-control"
+            formControlName="invoice_number"
+            placeholder="INV-001"
+          >
+
+        </div>
+
+
+        <div class="col-md-3">
+
+          <label class="form-label">
+            Invoice Date
+          </label>
+
+          <input
+            type="date"
+            class="form-control"
+            formControlName="invoice_date"
+          >
+
+        </div>
+
+      </div>
+
+
+      <!-- =============================== -->
+      <!-- PURCHASE LINES -->
+      <!-- =============================== -->
+
+      <div
+        formArrayName="lines"
+      >
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+
+          <h5 class="mb-0">
+            Purchase Lines
+          </h5>
+
+
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-primary"
+            (click)="addLine()"
+          >
+            + Add Line
+          </button>
+
+        </div>
+
+
+        <div
+          *ngFor="
+            let line of lines.controls;
+            let i = index
+          "
+          [formGroupName]="i"
+          class="purchase-line mb-3"
+        >
+
+          <div class="row g-2 align-items-end">
+
+            <!-- Product -->
+
+            <div class="col-lg-3">
+
+              <label class="form-label">
+                Product
+              </label>
+
+              <select
+                class="form-select"
+                formControlName="product"
+                (change)="onProductChange(i)"
+              >
+
+                <option [ngValue]="null">
+                  Select product
+                </option>
+
+
+                <option
+                  *ngFor="let product of products"
+                  [ngValue]="product.id"
+                >
+
+                  {{ product.code }}
+                  -
+                  {{ product.name }}
+
+                </option>
+
+              </select>
+
+
+              <small
+                *ngIf="
+                  getProduct(
+                    line.get('product')?.value
+                  )
+                "
+                class="text-muted"
+              >
+
+                Tax:
+                {{
+                  getTaxName(
+                    getProduct(
+                      line.get('product')?.value
+                    )
+                  )
+                }}
+
+                ({{
+                  getTaxRate(
+                    getProduct(
+                      line.get('product')?.value
+                    )
+                  )
+                }}%)
+
+              </small>
+
+            </div>
+
+
+            <!-- Quantity -->
+
+            <div class="col-lg-1">
+
+              <label class="form-label">
+                Qty
+              </label>
+
+              <input
+                type="number"
+                class="form-control"
+                formControlName="quantity"
+                min="0.001"
+                step="0.001"
+              >
+
+            </div>
+
+
+            <!-- Unit Cost -->
+
+            <div class="col-lg-2">
+
+              <label class="form-label">
+                Unit Cost
+              </label>
+
+              <input
+                type="number"
+                class="form-control"
+                formControlName="unit_cost"
+                min="0"
+                step="0.01"
+              >
+
+            </div>
+
+
+            <!-- Discount -->
+
+            <div class="col-lg-2">
+
+              <label class="form-label">
+                Discount
+              </label>
+
+              <input
+                type="number"
+                class="form-control"
+                formControlName="discount"
+                min="0"
+                step="0.01"
+              >
+
+            </div>
+
+
+            <!-- Lot -->
+
+            <div
+              class="col-lg-2"
+              *ngIf="isLotControlled(i)"
+            >
+
+              <label class="form-label">
+                Lot Number
+              </label>
+
+              <input
+                type="text"
+                class="form-control"
+                formControlName="lot_number"
+                placeholder="LOT-001"
+              >
+
+            </div>
+
+
+            <!-- Expiry -->
+
+            <div
+              class="col-lg-2"
+              *ngIf="isLotControlled(i)"
+            >
+
+              <label class="form-label">
+                Expiry Date
+              </label>
+
+              <input
+                type="date"
+                class="form-control"
+                formControlName="expiry_date"
+              >
+
+            </div>
+
+
+            <!-- Remove -->
+
+            <div class="col-lg-1">
+
+              <button
+                type="button"
+                class="btn btn-outline-danger w-100"
+                (click)="removeLine(i)"
+              >
+                ×
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <!-- Line calculation -->
+
+          <div class="row mt-2 small text-muted">
+
+            <div class="col-md-3">
+
+              Subtotal:
+              <strong>
+                ₹{{ formatAmount(getLineSubtotal(i)) }}
+              </strong>
+
+            </div>
+
+
+            <div class="col-md-3">
+
+              Discount:
+              <strong>
+                ₹{{ formatAmount(getLineDiscount(i)) }}
+              </strong>
+
+            </div>
+
+
+            <div class="col-md-3">
+
+              Tax:
+              <strong>
+                ₹{{ formatAmount(getLineTax(i)) }}
+              </strong>
+
+            </div>
+
+
+            <div class="col-md-3">
+
+              Line Total:
+              <strong>
+                ₹{{ formatAmount(getLineTotal(i)) }}
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- =============================== -->
+      <!-- TOTALS -->
+      <!-- =============================== -->
+
+      <div class="row justify-content-end mt-4">
+
+        <div class="col-md-5">
+
+          <div class="summary-card">
+
+            <div class="d-flex justify-content-between mb-2">
+
+              <span>
+                Subtotal
+              </span>
+
+              <strong>
+                ₹{{ formatAmount(subtotal) }}
+              </strong>
+
+            </div>
+
+
+            <div class="d-flex justify-content-between mb-2">
+
+              <span>
+                Discount
+              </span>
+
+              <strong>
+                ₹{{ formatAmount(discountTotal) }}
+              </strong>
+
+            </div>
+
+
+            <div class="d-flex justify-content-between mb-2">
+
+              <span>
+                Tax
+              </span>
+
+              <strong>
+                ₹{{ formatAmount(taxTotal) }}
+              </strong>
+
+            </div>
+
+
+            <hr>
+
+
+            <div class="d-flex justify-content-between fs-5">
+
+              <strong>
+                Net Total
+              </strong>
+
+              <strong>
+                ₹{{ formatAmount(netTotal) }}
+              </strong>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- =============================== -->
+      <!-- ACTIONS -->
+      <!-- =============================== -->
+
+      <div class="mt-4">
+
+        <button
+          type="button"
+          class="btn btn-outline-primary me-2"
+          [disabled]="saving || posting"
+          (click)="saveDraft()"
+        >
+
+          {{
+            saving
+              ? 'Saving...'
+              : 'Save Draft'
+          }}
+
+        </button>
+
+
+        <button
+          type="button"
+          class="btn btn-success"
+          [disabled]="saving || posting"
+          (click)="postVoucher()"
+        >
+
+          {{
+            posting
+              ? 'Posting...'
+              : 'Post Voucher'
+          }}
+
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<!-- =============================== -->
+<!-- VOUCHER HISTORY -->
+<!-- =============================== -->
+
+<div class="card shadow-sm">
+
+  <div class="card-header bg-white">
+
+    <strong>
+      Purchase Vouchers
+    </strong>
+
+  </div>
+
+
+  <div class="card-body p-0">
+
+    <div
+      *ngIf="loading"
+      class="p-4 text-center text-muted"
+    >
+      Loading vouchers...
+    </div>
+
+
+    <div
+      *ngIf="!loading && vouchers.length === 0"
+      class="p-4 text-center text-muted"
+    >
+      No purchase vouchers found.
+    </div>
+
+
+    <div
+      *ngIf="!loading && vouchers.length > 0"
+      class="table-responsive"
+    >
+
+      <table class="table table-hover align-middle mb-0">
+
+        <thead class="table-light">
+
+          <tr>
+
+            <th>
+              Voucher
+            </th>
+
+            <th>
+              Supplier
+            </th>
+
+            <th>
+              Invoice
+            </th>
+
+            <th>
+              Date
+            </th>
+
+            <th>
+              Status
+            </th>
+
+            <th class="text-end">
+              Net Total
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          <tr
+            *ngFor="let voucher of vouchers"
+          >
+
+            <td>
+              <strong>
+                {{ voucher.voucher_number }}
+              </strong>
+            </td>
+
+
+            <td>
+              {{ voucher.supplier_name }}
+            </td>
+
+
+            <td>
+              {{ voucher.invoice_number }}
+            </td>
+
+
+            <td>
+              {{ voucher.invoice_date }}
+            </td>
+
+
+            <td>
+
+              <span
+                class="badge"
+                [class.text-bg-warning]="
+                  voucher.status === 'DRAFT'
+                "
+                [class.text-bg-success]="
+                  voucher.status === 'POSTED'
+                "
+              >
+
+                {{ voucher.status }}
+
+              </span>
+
+            </td>
+
+
+            <td class="text-end">
+
+              ₹{{
+                voucher.net_total || '0.00'
+              }}
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
