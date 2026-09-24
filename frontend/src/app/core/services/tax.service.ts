@@ -62,4 +62,15 @@ export class TaxService {
       tax
     );
   }
+
+  createComponent(data: {
+  compound_tax: number;
+  component_tax: number;
+  sequence: number;
+}): Observable<any> {
+  return this.http.post(
+    this.api.getUrl('tax-components/'),
+    data
+  );
+}
 }

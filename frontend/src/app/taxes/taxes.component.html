@@ -1,1 +1,707 @@
-<p>taxes works!</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Tax Configuration</h2>
+    <p class="text-muted mb-0">
+      Configure simple and compound tax definitions.
+    </p>
+  </div>
+</div>
+
+
+<!-- Messages -->
+
+<div
+  *ngIf="successMessage"
+  class="alert alert-success"
+>
+  {{ successMessage }}
+</div>
+
+<div
+  *ngIf="errorMessage"
+  class="alert alert-danger"
+>
+  {{ errorMessage }}
+</div>
+
+
+<!-- ========================= -->
+<!-- TAX FORM -->
+<!-- ========================= -->
+
+<div class="card shadow-sm mb-4">
+
+  <div class="card-header bg-white">
+    <strong>
+      {{ editingId ? 'Edit Tax' : 'Add Tax' }}
+    </strong>
+  </div>
+
+  <div class="card-body">
+
+    <form
+      [formGroup]="taxForm"
+      (ngSubmit)="submit()"
+    >
+
+      <div class="row g-3">
+
+        <!-- Tax Name -->
+        <div class="col-md-3">
+
+          <label class="form-label">
+            Tax Name
+          </label>
+
+          <input
+            type="text"
+            class="form-control"
+            formControlName="name"
+            placeholder="e.g. GST 18%"
+          >
+
+          <div
+            class="text-danger small mt-1"
+            *ngIf="
+              taxForm.get('name')?.touched &&
+              taxForm.get('name')?.invalid
+            "
+          >
+            Tax name is required.
+          </div>
+
+        </div>
+
+
+        <!-- Code -->
+        <div class="col-md-2">
+
+          <label class="form-label">
+            Code
+          </label>
+
+          <input
+            type="text"
+            class="form-control"
+            formControlName="code"
+            placeholder="GST18"
+          >
+
+          <div
+            class="text-danger small mt-1"
+            *ngIf="
+              taxForm.get('code')?.touched &&
+              taxForm.get('code')?.invalid
+            "
+          >
+            Tax code is required.
+          </div>
+
+        </div>
+
+
+        <!-- Tax Type -->
+        <div class="col-md-3">
+
+          <label class="form-label">
+            Tax Type
+          </label>
+
+          <select
+            class="form-select"
+            formControlName="tax_type"
+          >
+
+            <option value="SIMPLE">
+              Simple
+            </option>
+
+            <option value="COMPOUND">
+              Compound
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- Rate -->
+        <div class="col-md-2">
+
+          <label class="form-label">
+            Rate (%)
+          </label>
+
+          <input
+            type="number"
+            class="form-control"
+            formControlName="rate"
+            min="0"
+            step="0.01"
+            [disabled]="
+              taxForm.get('tax_type')?.value === 'COMPOUND'
+            "
+          >
+
+          <small
+            class="text-muted"
+            *ngIf="
+              taxForm.get('tax_type')?.value === 'COMPOUND'
+            "
+          >
+            Compound rate comes from components.
+          </small>
+
+        </div>
+
+
+        <!-- Active -->
+        <div class="col-md-2 d-flex align-items-end">
+
+          <div class="form-check mb-2">
+
+            <input
+              class="form-check-input"
+              type="checkbox"
+              formControlName="is_active"
+              id="activeTax"
+            >
+
+            <label
+              class="form-check-label"
+              for="activeTax"
+            >
+              Active
+            </label>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- Form buttons -->
+
+      <div class="mt-4">
+
+        <button
+          type="submit"
+          class="btn btn-primary me-2"
+          [disabled]="saving"
+        >
+          {{
+            saving
+              ? 'Saving...'
+              : (editingId ? 'Update Tax' : 'Add Tax')
+          }}
+        </button>
+
+
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          *ngIf="editingId"
+          (click)="resetForm()"
+        >
+          Cancel
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- TAX LIST -->
+<!-- ========================= -->
+
+<div class="card shadow-sm mb-4">
+
+  <div class="card-header bg-white">
+    <strong>Tax Definitions</strong>
+  </div>
+
+
+  <div class="card-body p-0">
+
+    <!-- Loading -->
+
+    <div
+      *ngIf="loading"
+      class="p-4 text-center text-muted"
+    >
+      Loading taxes...
+    </div>
+
+
+    <!-- Empty -->
+
+    <div
+      *ngIf="!loading && taxes.length === 0"
+      class="p-4 text-center text-muted"
+    >
+      No taxes configured.
+    </div>
+
+
+    <!-- Table -->
+
+    <div
+      *ngIf="!loading && taxes.length > 0"
+      class="table-responsive"
+    >
+
+      <table class="table table-hover align-middle mb-0">
+
+        <thead class="table-light">
+
+          <tr>
+
+            <th>Name</th>
+
+            <th>Code</th>
+
+            <th>Type</th>
+
+            <th>Rate</th>
+
+            <th>Components</th>
+
+            <th>Status</th>
+
+            <th class="text-end">
+              Actions
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          <tr *ngFor="let tax of taxes">
+
+            <!-- Name -->
+
+            <td>
+
+              <strong>
+                {{ tax.name }}
+              </strong>
+
+            </td>
+
+
+            <!-- Code -->
+
+            <td>
+              <code>
+                {{ tax.code }}
+              </code>
+            </td>
+
+
+            <!-- Type -->
+
+            <td>
+
+              <span
+                class="badge"
+                [class.text-bg-primary]="tax.tax_type === 'SIMPLE'"
+                [class.text-bg-info]="tax.tax_type === 'COMPOUND'"
+              >
+                {{ tax.tax_type }}
+              </span>
+
+            </td>
+
+
+            <!-- Rate -->
+
+            <td>
+
+              <ng-container
+                *ngIf="tax.tax_type === 'SIMPLE'"
+              >
+                {{ tax.rate }}%
+              </ng-container>
+
+              <ng-container
+                *ngIf="tax.tax_type === 'COMPOUND'"
+              >
+                <span class="text-muted">
+                  From components
+                </span>
+              </ng-container>
+
+            </td>
+
+
+            <!-- Components -->
+
+            <td>
+
+              <!-- Compound with components -->
+
+              <ng-container
+                *ngIf="
+                  tax.tax_type === 'COMPOUND' &&
+                  tax.components &&
+                  tax.components.length > 0
+                "
+              >
+
+                <div
+                  *ngFor="let component of tax.components"
+                  class="small mb-1"
+                >
+
+                  <span class="badge text-bg-light border">
+
+                    {{ component.sequence }}
+
+                  </span>
+
+                  {{ component.component_tax_name }}
+
+                  <span class="text-muted">
+                    ({{ getComponentRate(component.component_tax) }}%)
+                  </span>
+
+                </div>
+
+              </ng-container>
+
+
+              <!-- Compound without components -->
+
+              <span
+                *ngIf="
+                  tax.tax_type === 'COMPOUND' &&
+                  (!tax.components ||
+                  tax.components.length === 0)
+                "
+                class="text-warning small"
+              >
+                No components configured
+              </span>
+
+
+              <!-- Simple -->
+
+              <span
+                *ngIf="tax.tax_type === 'SIMPLE'"
+                class="text-muted"
+              >
+                —
+              </span>
+
+            </td>
+
+
+            <!-- Status -->
+
+            <td>
+
+              <span
+                class="badge"
+                [class.text-bg-success]="tax.is_active"
+                [class.text-bg-danger]="!tax.is_active"
+              >
+
+                {{
+                  tax.is_active
+                    ? 'Active'
+                    : 'Inactive'
+                }}
+
+              </span>
+
+            </td>
+
+
+            <!-- Actions -->
+
+            <td class="text-end">
+
+              <!-- Edit -->
+
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary me-2"
+                (click)="edit(tax)"
+              >
+                Edit
+              </button>
+
+
+              <!-- Components -->
+
+              <button
+                *ngIf="tax.tax_type === 'COMPOUND'"
+                type="button"
+                class="btn btn-sm btn-outline-info me-2"
+                (click)="openComponentForm(tax)"
+              >
+                Components
+              </button>
+
+
+              <!-- Activate / Deactivate -->
+
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                (click)="toggleActive(tax)"
+              >
+                {{
+                  tax.is_active
+                    ? 'Deactivate'
+                    : 'Activate'
+                }}
+              </button>
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ================================================= -->
+<!-- COMPOUND TAX COMPONENT CONFIGURATION -->
+<!-- ================================================= -->
+
+<div
+  id="compoundTaxConfiguration"
+  *ngIf="showComponentForm"
+  class="card shadow-sm border-info mb-4"
+>
+
+  <div class="card-header bg-info-subtle">
+
+    <div class="d-flex justify-content-between align-items-center">
+
+      <strong>
+        Configure Compound Tax
+      </strong>
+
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Close"
+        (click)="cancelComponentForm()"
+      ></button>
+
+    </div>
+
+  </div>
+
+
+  <div class="card-body">
+
+    <!-- Selected compound tax -->
+
+    <div
+      *ngIf="selectedCompoundTaxId"
+      class="alert alert-info"
+    >
+
+      <strong>
+        {{
+          getTaxName(selectedCompoundTaxId)
+        }}
+      </strong>
+
+      <span class="ms-2">
+        Add simple taxes as components of this compound tax.
+      </span>
+
+    </div>
+
+
+    <!-- Existing components -->
+
+    <div
+      *ngIf="getSelectedTax()?.components?.length"
+      class="mb-4"
+    >
+
+      <h6>
+        Current Components
+      </h6>
+
+
+      <div class="table-responsive">
+
+        <table class="table table-sm table-bordered">
+
+          <thead class="table-light">
+
+            <tr>
+              <th style="width: 100px;">
+                Sequence
+              </th>
+
+              <th>
+                Component Tax
+              </th>
+
+              <th style="width: 150px;">
+                Rate
+              </th>
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            <tr
+              *ngFor="
+                let component of getSelectedTax()?.components
+              "
+            >
+
+              <td>
+                {{ component.sequence }}
+              </td>
+
+              <td>
+                {{ component.component_tax_name }}
+              </td>
+
+              <td>
+                {{ getComponentRate(component.component_tax) }}%
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+
+    <!-- Add component form -->
+
+    <form
+      [formGroup]="componentForm"
+      (ngSubmit)="addComponent()"
+    >
+
+      <h6 class="mb-3">
+        Add Component
+      </h6>
+
+
+      <div class="row g-3">
+
+        <!-- Component Tax -->
+
+        <div class="col-md-6">
+
+          <label class="form-label">
+            Component Tax
+          </label>
+
+          <select
+            class="form-select"
+            formControlName="component_tax"
+          >
+
+            <option [ngValue]="null">
+              Select component tax
+            </option>
+
+
+            <option
+              *ngFor="let tax of availableComponentTaxes"
+              [ngValue]="tax.id"
+            >
+
+              {{ tax.name }}
+
+              ({{ tax.rate }}%)
+
+            </option>
+
+          </select>
+
+
+          <div
+            class="text-danger small mt-1"
+            *ngIf="
+              componentForm.get('component_tax')?.touched &&
+              componentForm.get('component_tax')?.invalid
+            "
+          >
+            Select a component tax.
+          </div>
+
+        </div>
+
+
+        <!-- Sequence -->
+
+        <div class="col-md-2">
+
+          <label class="form-label">
+            Sequence
+          </label>
+
+          <input
+            type="number"
+            class="form-control"
+            formControlName="sequence"
+            min="1"
+          >
+
+        </div>
+
+      </div>
+
+
+      <!-- Buttons -->
+
+      <div class="mt-4">
+
+        <button
+          type="submit"
+          class="btn btn-primary me-2"
+        >
+          Add Component
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="cancelComponentForm()"
+        >
+          Cancel
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
