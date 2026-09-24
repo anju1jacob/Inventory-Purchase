@@ -76,7 +76,7 @@ class PurchaseVoucherLineSerializer(serializers.ModelSerializer):
 class PurchaseVoucherSerializer(serializers.ModelSerializer):
     lines = PurchaseVoucherLineSerializer(
         many=True,
-        required=True,
+        required=False,
     )
 
     class Meta:
@@ -97,7 +97,6 @@ class PurchaseVoucherSerializer(serializers.ModelSerializer):
             "updated_at",
             "posted_at",
         ]
-
         read_only_fields = [
             "id",
             "status",
@@ -111,18 +110,29 @@ class PurchaseVoucherSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-        lines = attrs.get("lines", [])
+        lines = attrs.get("lines")
+
+        # Creation requires at least one line.
+        if self.instance is None and not lines:
+            raise serializers.ValidationError({
+                "lines": "At least one purchase line is required."
+            })
+
+        # Nothing to validate if only voucher header is being updated.
+        if lines is None:
+            return attrs
+
+        invoice_date = attrs.get(
+            "invoice_date",
+            self.instance.invoice_date if self.instance else None,
+        )
 
         if not lines:
-            raise serializers.ValidationError(
-                {
-                    "lines": (
-                        "At least one purchase line is required."
-                    )
-                }
-            )
+            raise serializers.ValidationError({
+                "lines": "At least one purchase line is required."
+            })
 
-        invoice_date = attrs.get("invoice_date")
+        seen_product_lots = set()
 
         for line in lines:
             product = line["product"]
@@ -131,48 +141,52 @@ class PurchaseVoucherSerializer(serializers.ModelSerializer):
 
             if product.is_lot_controlled:
                 if not lot_number:
-                    raise serializers.ValidationError(
-                        {
-                            "lines": (
-                                f"Lot number is required for "
-                                f"lot-controlled product "
-                                f"'{product.name}'."
-                            )
-                        }
-                    )
+                    raise serializers.ValidationError({
+                        "lines": (
+                            f"Lot number is required for "
+                            f"'{product.name}'."
+                        )
+                    })
 
                 if not expiry_date:
-                    raise serializers.ValidationError(
-                        {
-                            "lines": (
-                                f"Expiry date is required for "
-                                f"lot-controlled product "
-                                f"'{product.name}'."
-                            )
-                        }
-                    )
+                    raise serializers.ValidationError({
+                        "lines": (
+                            f"Expiry date is required for "
+                            f"'{product.name}'."
+                        )
+                    })
 
                 if expiry_date < invoice_date:
-                    raise serializers.ValidationError(
-                        {
-                            "lines": (
-                                f"Expiry date for '{product.name}' "
-                                f"cannot be before the invoice date."
-                            )
-                        }
-                    )
+                    raise serializers.ValidationError({
+                        "lines": (
+                            f"Expiry date for '{product.name}' "
+                            "cannot be before the invoice date."
+                        )
+                    })
+
+                key = (product.id, lot_number)
 
             else:
                 if lot_number or expiry_date:
-                    raise serializers.ValidationError(
-                        {
-                            "lines": (
-                                f"Lot information should not be "
-                                f"provided for non-lot-controlled "
-                                f"product '{product.name}'."
-                            )
-                        }
+                    raise serializers.ValidationError({
+                        "lines": (
+                            f"Lot information should not be provided "
+                            f"for non-lot-controlled product "
+                            f"'{product.name}'."
+                        )
+                    })
+
+                key = (product.id, None)
+
+            if key in seen_product_lots:
+                raise serializers.ValidationError({
+                    "lines": (
+                        "The same product/lot cannot appear "
+                        "more than once in a voucher."
                     )
+                })
+
+            seen_product_lots.add(key)
 
         return attrs
 
@@ -191,3 +205,30 @@ class PurchaseVoucherSerializer(serializers.ModelSerializer):
             )
 
         return voucher
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        if instance.status == PurchaseVoucher.Status.POSTED:
+            raise serializers.ValidationError({
+                "detail": (
+                    "Posted vouchers are immutable and cannot be edited."
+                )
+            })
+
+        lines_data = validated_data.pop("lines", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        if lines_data is not None:
+            instance.lines.all().delete()
+
+            for line_data in lines_data:
+                PurchaseVoucherLine.objects.create(
+                    voucher=instance,
+                    **line_data,
+                )
+
+        return instance
