@@ -1,0 +1,15 @@
+.card {
+  border: 0;
+}
+
+.table th {
+  white-space: nowrap;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.form-label {
+  font-weight: 500;
+}
