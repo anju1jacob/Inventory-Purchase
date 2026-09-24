@@ -1,1 +1,236 @@
-<p>inventory works!</p>
+<div class="container-fluid">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Inventory</h2>
+      <p class="text-muted mb-0">
+        Product and lot-level stock balances
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn btn-outline-primary"
+      (click)="loadInventory()"
+      [disabled]="loading">
+      {{ loading ? 'Refreshing...' : 'Refresh' }}
+    </button>
+  </div>
+
+  <!-- Error -->
+  <div
+    *ngIf="errorMessage"
+    class="alert alert-danger"
+    role="alert">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Summary -->
+  <div class="row g-3 mb-4">
+
+    <div class="col-md-3">
+      <div class="card summary-card h-100">
+        <div class="card-body">
+          <div class="text-muted small">Total Stock</div>
+          <div class="summary-value">
+            {{ formatQuantity(totalQuantity) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card summary-card h-100">
+        <div class="card-body">
+          <div class="text-muted small">Usable Stock</div>
+          <div class="summary-value">
+            {{ formatQuantity(usableQuantity) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card summary-card h-100">
+        <div class="card-body">
+          <div class="text-muted small">Expired Stock</div>
+          <div class="summary-value">
+            {{ formatQuantity(expiredQuantity) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card summary-card h-100">
+        <div class="card-body">
+          <div class="text-muted small">Inventory Lots</div>
+          <div class="summary-value">
+            {{ lotCount }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Loading -->
+  <div
+    *ngIf="loading && inventory.length === 0"
+    class="text-center py-5">
+
+    <div
+      class="spinner-border text-primary"
+      role="status">
+    </div>
+
+    <p class="text-muted mt-2 mb-0">
+      Loading inventory...
+    </p>
+  </div>
+
+  <!-- Inventory table -->
+  <div
+    *ngIf="!loading || inventory.length > 0"
+    class="card">
+
+    <div class="card-header bg-white">
+      <div class="d-flex justify-content-between align-items-center">
+        <strong>Stock by Product & Lot</strong>
+
+        <span class="badge bg-light text-dark">
+          FIFO order
+        </span>
+      </div>
+    </div>
+
+    <div class="card-body p-0">
+
+      <div class="table-responsive">
+
+        <table class="table table-hover align-middle mb-0">
+
+          <thead class="table-light">
+
+            <tr>
+              <th>#</th>
+              <th>Product</th>
+              <th>Lot Number</th>
+              <th>Expiry Date</th>
+              <th>Total Quantity</th>
+              <th>Usable Quantity</th>
+              <th>Status</th>
+              <th>Received</th>
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            <tr *ngFor="let lot of inventory; let i = index">
+
+              <td>
+                {{ i + 1 }}
+              </td>
+
+              <td>
+                <div class="fw-semibold">
+                  {{ lot.product_name }}
+                </div>
+
+                <small class="text-muted">
+                  {{ lot.product_code }}
+                </small>
+              </td>
+
+              <td>
+                <span *ngIf="lot.lot_number; else noLot">
+                  {{ lot.lot_number }}
+                </span>
+
+                <ng-template #noLot>
+                  <span class="text-muted">
+                    No lot
+                  </span>
+                </ng-template>
+              </td>
+
+              <td>
+                {{ formatDate(lot.expiry_date) }}
+              </td>
+
+              <td>
+                {{ formatQuantity(getQuantity(lot)) }}
+              </td>
+
+              <td>
+                <span
+                  [class.text-danger]="lot.is_expired"
+                  [class.fw-semibold]="lot.is_expired">
+
+                  {{ formatQuantity(getUsableQuantity(lot)) }}
+
+                </span>
+              </td>
+
+              <td>
+
+                <span
+                  *ngIf="lot.is_expired"
+                  class="badge bg-danger">
+                  Expired
+                </span>
+
+                <span
+                  *ngIf="!lot.is_expired"
+                  class="badge bg-success">
+                  Usable
+                </span>
+
+              </td>
+
+              <td>
+                {{ lot.received_at | date:'dd/MM/yyyy HH:mm' }}
+              </td>
+
+            </tr>
+
+            <!-- Empty state -->
+            <tr *ngIf="inventory.length === 0 && !loading">
+
+              <td
+                colspan="8"
+                class="text-center py-5 text-muted">
+
+                No inventory available.
+
+                <div class="small mt-1">
+                  Inventory is created when a purchase voucher is successfully posted.
+                </div>
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- FIFO explanation -->
+  <div class="alert alert-info mt-3 mb-0">
+
+    <strong>FIFO:</strong>
+    Inventory lots are displayed in received order
+    (oldest stock first). This provides the conceptual FIFO
+    basis for future stock consumption.
+
+  </div>
+
+</div>
