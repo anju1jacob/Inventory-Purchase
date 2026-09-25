@@ -28,7 +28,7 @@ class PurchaseVoucher(models.Model):
 class PurchaseVoucherLine(models.Model):
     voucher = models.ForeignKey(PurchaseVoucher,on_delete=models.CASCADE,related_name="lines",)
     product = models.ForeignKey("catalog.Product",on_delete=models.PROTECT,related_name="purchase_lines",)
-    quantity = models.DecimalField(max_digits=12,decimal_places=3,validators=[MinValueValidator(0.001)],)
+    quantity = models.PositiveIntegerField()
     unit_cost = models.DecimalField(max_digits=12,decimal_places=2,validators=[MinValueValidator(0)])
     discount = models.DecimalField(max_digits=12,decimal_places=2,default=0,validators=[MinValueValidator(0)],)
     line_subtotal = models.DecimalField(max_digits=14,decimal_places=2,default=0,)
