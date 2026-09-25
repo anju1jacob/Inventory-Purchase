@@ -139,8 +139,9 @@ Open a new terminal from the project root.
 ### 1. Navigate to the frontend
 cd frontend
 ### 2. Install Angular dependencies
--npm install -g @angular/cli
--npm install bootstrap
+npm install -g @angular/cli
+
+npm install bootstrap
 ### 3. Start the Angular development server
 ng serve
 
