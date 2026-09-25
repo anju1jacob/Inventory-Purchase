@@ -108,7 +108,7 @@ Configure the PostgreSQL database credentials.
 
 ```cmd
 python manage.py migrate
-
+```
 ### 6. Create an administrator
 
 ```cmd
@@ -119,6 +119,7 @@ python manage.py createsuperuser
 
 ```cmd
 python manage.py runserver
+```
 The API will be available at:
 
 ```text
@@ -138,7 +139,9 @@ Open a new terminal from the project root.
 ### 1. Navigate to the frontend
 cd frontend
 ### 2. Install Angular dependencies
-npm install
+npm install -g @angular/cli
+
+npm install bootstrap
 ### 3. Start the Angular development server
 ng serve
 
