@@ -122,12 +122,13 @@ export class PurchasesComponent implements OnInit {
       ],
 
       quantity: [
-        '1',
-        [
-          Validators.required,
-          Validators.min(0.001)
-        ]
-      ],
+  1,
+  [
+    Validators.required,
+    Validators.min(1),
+    Validators.pattern(/^[1-9]\d*$/)
+  ]
+],
 
       unit_cost: [
         '0.00',
